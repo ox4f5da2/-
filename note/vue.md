@@ -1939,6 +1939,7 @@ export default {
 </script>
 
 <style lang="less">
+/* 用less的话得加上lang="less" */
 .test {
   background-color: orange;
   .a {
@@ -1957,16 +1958,19 @@ export default {
 <template>
   <div id="app">
     <h1>这是根组件</h1>
-    <test></test>
+    <!-- 步骤3: 以标签的形式使用刚才注册的组件 -->
+    <Test></Test>
   </div>
 </template>
 
 <script>
-import test from '@/components/test.vue'
+// 步骤1: 使用import语法导入需要的组件
+import Test from '@/components/Test.vue'
 
 export default {
+  // 步骤2: 使用components节点注册组件，一般组件名首字母大写来与原生组件区别
   components: {
-    test
+    Test
   }
 }
 </script>
@@ -1984,14 +1988,34 @@ export default {
 </style>
 ```
 
+4. 路径提示插件安装
+
+- VScode插件名：`Path Autocomplete`，作者名：`Mihai Vilcu`
+
+  - 在settings.json文件中加入如下代码：
+
+  ```json
+  // import导入文件时是否携带文件的扩展名
+  "path-autocomplete.extensionOnImport": true,
+  // 配置@的路径提示 
+  "path-autocomplete.pathMappings": {
+    "@": "${folder}/src"
+  }
+  ```
+
+- 还有三个插件【推荐】：`Vetur`、`Auto Close Tag`和`Vue 3 Snippets`
 
 
-#### 14.1 vue 全局组件
 
-在vue项目的main.js入口文件中，通过Vue.component()方法注册全局组件
+#### 14.1 vue 全局组件注册
 
-```vue
+在vue项目的**main.js**入口文件中，通过`Vue.component(...)`方法注册全局组件
+
+```js
+// 导入需要全局注册的组件
 import Count from '@/components/Count.vue'
+// 参数1: 字符串格式，表示组件的注册名称
+// 参数2: 需要被全局注册的那个文件
 Vue.component('MyCount'，Count)
 ```
 
@@ -1999,25 +2023,34 @@ Vue.component('MyCount'，Count)
 
 #### 14.2 组件的复用性
 
+- `props`是组件的**自定义属性**，在**封装通用组件**的时候，合理地使用props可以极大的**提高组件的复用性**!
+
 ```vue
-export default {
-  props: {
-    init: {
-			// 设置默认值
-      default: 0,
-			// 指定值的类型必须是Number数字
-			type: Number,
-			// 必填属性
-			required: true
-    }
-  },
-  data() {
-    return {
-      count: this.init
+<!-- 封装的组件的vue文件 -->
+<script>  
+	export default {
+    // props是”自定义属性”，允许使用者通过自定义属性，为当前组件指定初始值
+    // 注意: props是只读的，不要直接修改props的值，否则终端会报错!
+    props: {
+      init: {
+        // 设置自定义属性的默认值
+        default: 0,
+        // 指定值的类型必须是Number数字
+        type: Number,
+        // 必填属性
+        required: true
+      }
+    },
+    data() {
+      return {
+        // 要想修改props的值，可以把props的值转存到data中，因为data中的数据都是可读可写的!
+        count: this.init
+      }
     }
   }
-}
+</script>
 
+<!-- 使用自定义组件的vue文件 -->
 <MyCount :init="6"></MyCount>
 ```
 
@@ -2025,7 +2058,13 @@ export default {
 
 #### 14.3 组件样式的冲突
 
-使用属性选择器,在组件内的每个标签都加上一个固定的属性或者在style加scoped属性`<style lang="less" scoped>...</style>`
+- 默认情况下，写在**.vue组件中的样式会全局生效**，因此很容易造成**多个组件之间的样式冲突问题**。
+- 导致组件之间样式冲突的根本原因是:
+  1. 单页面应用程序中，所有组件的DOM结构，都是基于**唯一的index.html页面**进行呈现的
+  2. 每个组件中的样式，都会**影响整个index.html页面**中的DOM元素
+
+- 使用属性选择器，在组件内的每个标签都加上一个固定的属性或者在style加scoped属性：
+  - `<style lang="less" scoped>...</style>`
 
 
 
@@ -2035,7 +2074,10 @@ export default {
 
 
 
-#### 14.5 生命周期函数
+#### 14.5 生命周期和生命周期函数
+
+- 生命周期(Life Cycle)是指一个组件从创建->运行->销毁的整个阶段，强调的是一一个时间段。
+- 生命周期函数:是由vue框架提供的内置函数，会伴随着组件的生命周期，自动按次序执行。
 
 > - 组件创建阶段: beforeCreate、created、beforeMount、mounted
 > - 组件运行阶段: beforeUpdate、updated
@@ -2043,22 +2085,56 @@ export default {
 
 ![](https://cn.vuejs.org/images/lifecycle.png)
 
-在created函数中发起ajax请求，在mounted函数里操作DOM
+1. `beforeCreate`：组件的props/data/methods**尚未**被创建，都处于**不可用**状态。
+
+> 初始化事件和生命周期函数
+
+2. `created`：组件的porps/data/methods已创建好，都处于**可用**的状态。但是组件的**模板结构尚未生成**!
+
+> 初始化props、 data、 methods。created生命周期函数，非常常用。经常在它里面，调用methods 中的方法，请求服务器的数据。并且，把请求到的数据，转存到data中，供template模板渲染的时候使用!
+
+3. 基于**数据**和**模板**在内存中**编译生成**HTML结构
+
+4. `beforeMount`：**将要把**内存中编译好的**HTML**结构渲染到浏览器中。此时浏览器中**还没有**当前组件的DOM结构。
+
+5. 用**内存中**编译生成的HTML结构，**替换掉el**属性指定的DOM元素。
+
+6. `mounted`：已经把内存中的HTML结构，成功的渲染到了浏览器之中。此时浏览器中**已然包含**了当前组件的**DOM结构**。
+
+> 如果想操作DOM，最早只能在mounted进行
+
+7. `beforeUpdate`：将要根据变化过后、最新的数据重新渲染组件的模板结构。
+
+8. 根据**最新的数据，重新渲染**组件的DOM结构
+
+9. `updated`：已经根据最新的数据，**完成了**组件DOM结构的**重新渲染**。
+
+> 第7，8，9步是循环的，如果有改变数据的话。因此当数据变化之后，为了能够操作到最新的DOM结构，必须把代码写到updated生命周期函数中。
+
+10. `beforeDestroy`：将要销毁此组件，此时尚未销毁，组件还处于正常工作的状态。
+11. 销毁当前组件的数据侦听器、子组件、事件监听
+12. `destroyed`：组件已经被销毁，此组件在浏览器中对应的DOM结构已被完全移除!
 
 
 
 #### 14.6 父组件到子组件的传值
 
 ```vue
-<MyCount :init="myCountNum"></MyCount>
+<template>
+	<div>
+    <MyCount :init="myCountNum"></MyCount>
+  </div>
+</template>
 
-export default {
-  data() {
-    return {
-      myCountNum: 999
-    };
-  }
-};
+<script>
+  export default {
+    data() {
+      return {
+        myCountNum: 999
+      };
+    }
+  };
+</script>
 ```
 
 
