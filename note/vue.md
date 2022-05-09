@@ -659,11 +659,13 @@ module.exports = {
 1. 数据驱动视图:
    - 数据的变化**会驱动视图**自动更新
    - 好处: 程序员只管把数据维护好，那么页面结构会被vue自动渲染出来!
-
+   - 注意：数据驱动视图是**单向的数据绑定**
+   
 2. 双向数据绑定:
    - 在网页中，form 表单负责**采集数据**，Ajax 负责**提交数据**。
    - js数据的变化，会被自动渲染到页面上
    - 页面上表单采集的数据发生变化的时候，会被vue自动获取到，并更新到js 数据中
+   - 好处：开发者不再需要手动操作DOM元素来获取表单最新的值
 
 
 
@@ -681,6 +683,10 @@ module.exports = {
 
 ## 10. Vue2 / Vue3的使用
 
+1. 导入vue.js的script脚本文件
+2. 在页面中声明一个将要被vue所控制的DOM区域
+3. 创建vm实例对象(vue 实例对象)
+
 #### 10.1 导入方式一
 
 - 访问[官方安装](https://cn.vuejs.org/v2/guide/installation.html)页面，自行下载安装
@@ -694,7 +700,7 @@ module.exports = {
   const vm = new Vue({
     el: '#app',
     data: {
-      name: 'hello world!'
+      msg: 'hello world!'
     }
   })
 </script>
@@ -738,9 +744,7 @@ $ npm install vue@next
 
 #### 11.1 {{ }} 插值语法
 
-`{{}}`:  数据绑定，既可以绑定基本数据类型，也可绑定对象、数组等类型; 同时也可以进
-
-行变量相加运算或者三目运算等
+`{{}}`:  数据绑定，既可以绑定基本数据类型，也可绑定对象、数组等类型; 同时也可以进行变量相加运算或者三目运算等
 
 ```html
 <body>
@@ -933,7 +937,7 @@ $ npm install vue@next
 
 
 
-#### 11.7 v-model
+#### 11.7 v-model（双向绑定）
 
 `v-model`: 
 
@@ -942,6 +946,14 @@ $ npm install vue@next
 - V-model.lazy: 在敲回车和失去焦点的时候才进行绑定
 - v-model.number: 使字符串转为数字
 - v-model.trim: 去除前后空格
+
+> v-model指令一般用于**表单元素**结合使用才有意义
+
+| 修饰符  | 描述                               |
+| :------ | ---------------------------------- |
+| .lazy   | 在敲回车和失去焦点的时候才进行绑定 |
+| .number | 使字符串转为数字                   |
+| .trim   | 去除前后空格                       |
 
 ```html
 <body>
@@ -1008,9 +1020,13 @@ $ npm install vue@next
 
 #### 11.8 v-show / v-if / v-else
 
-`v-if/v-else`: 会把节点删除，只切换一次用，大部分情况用这个
+`v-if/v-else`: 会把节点删除，**只切换一次**，大部分情况用这个
 
-`v-show`: 不会删除节点，只是多加了display:none，在隐藏与显示频繁切换直接用
+`v-show`: 不会删除节点，只是多加了display:none，在隐藏与显示**频繁切换**
+
+- 如果要频繁的切换元索的显示状态，用v-show性能会更好
+
+- 如果刚进入页面的时候，某些元素默认不需要被展示，而且后期这个元素很可能也不需要被展示出来，此时v-if性能更好
 
 ```html
 <body>
@@ -1065,8 +1081,8 @@ $ npm install vue@next
 
 `v-for`: 
 
-- 循环遍历数组 “(item, index) in XXX”
-- 遍历对象“(value, key) in XXX”
+- 循环遍历数组 `"(item, index) in XXX"`
+- 遍历对象`"(value, key) in XXX"`
 
 ```html
 <body>
@@ -1098,21 +1114,36 @@ $ npm install vue@next
 </body>
 ```
 
+##### 11.9.1 v-for使用时的建议
+
+1. 官方建议：只要用到了v-for指令，那么**一定**要绑定一个`:key`属性
+
+2. 而且，尽量把id作为key的值，不要用index作为key
+
+3. 官方对key的值类型，是有要求的:字符串或数字类型
+
+4. key的值是千万不能重复的，否则会终端报错: Duplicate keys detected*(重复的键被检测到)*
+
+##### 11.9.2 key的注意事项
+
+1. key 的值只能是**字符串**或**数字**类型
+2. key 的值**必须具有唯一性**(即: key 的值不能重复)
+3. 建议把**数据项id属性的值**作为**key**的值( 因为id属性的值具有唯一性 )
+4. 使用**index的值**当作key的值**没有任何意义**( 因为index的值不具有唯一性 )
+5. 建议使用v-for指令时**一定要指定key的值**(既提升性能、又防止列表状态紊乱)
+
 
 
 #### 11.10 v-bind
 
 `v-bind`: 
 
-- 属性绑定，可以简写为:src="XXX",v-bind:src="XXX"
-
+- 属性绑定，可以简写为`:src="XXX"`相当于`v-bind:src="XXX"`
 - 动态绑定class—— :class{类名1: 布尔值,类名2: 布尔值}
-
 - 然后v-on:click="fn"，在fn里改变布尔值
-
 - :class='getClasses()',getClasses: function(){return {...}}
-
 - 绑定样式——:style="{fontsize: size+'px'}"
+- 在使用v-bind属性绑定期间，如果绑定内容需要进行动态拼接,则字符串的外面应该包裹单引号
 
 ```html
 <head>
@@ -1163,14 +1194,13 @@ $ npm install vue@next
 `v-on`: 
 
 - 绑定事件v-on:click="" 
-- @click=""
+- 语法糖：`@click=""`
 - @click.stop: 阻止冒泡e.stopPropagation()
 - @click.prevent: 阻止默认事件 e.preventDefault()
 - @keyup.enter: 输入回车
 - @click.native: 组件监听
 - @click.once: 点击回调只触发一次
-
-
+- 在绑定事件处理函数的时候，可以使用() 传递参数，如果要传event则需要传递$event，如果只传入event时函数的参数可以不写
 
 ##### 11.11.1 v-on基础用法
 
@@ -1190,14 +1220,14 @@ $ npm install vue@next
             },
             methods: {
                 add(){
-                    this.count ++;
+                    this.count++;
                 },
                 minus(){
                     if(this.count <= 60){
                         alert('不能再减了，我只有内在美了')
                         return
                     }
-                    this.count --;
+                    this.count--;
                 }
             },
         })
@@ -1205,9 +1235,50 @@ $ npm install vue@next
 </body>
 ```
 
+```html
+<!-- 传入event参数的实例 -->
+<body>
+  <div id="root">
+    <div>值：{{ count }}</div>
+    <button @click="add($event)">+1</button>
+    <!-- <button @click="add">+1</button> -->
+    <button @click="sub($event, 2)">-1</button>
+  </div>
+
+  <script>
+    let vm = new new Vue({
+      el: "#root",
+      data: {
+        count: 0
+      },
+      methods: {
+        add() {
+          console.log(e); // e可以省略，传入的函数参数也可以省略，也可以像注释部分那样写
+          this.count++;
+        },
+        sub(e, step) {
+          console.log(e); // e不可以省略
+          this.count -= step;
+        }
+      }
+    })
+  </script>
+</body>
+```
+
 
 
 ##### 11.11.2 v-on事件修饰符
+
+事件修饰符表格：
+
+| 修饰符       | 描述                                          |
+| ------------ | --------------------------------------------- |
+| **.stop**    | 阻止事件冒泡（调用 event.stopPropagation()）  |
+| **.prevent** | 阻止默认事件（调用 event.preventDefault()。） |
+| .capture     | 添加事件捕获                                  |
+| .self        | 只能由自身触发事件                            |
+| .once        | 该事件只会触发一次                            |
 
 ```html
 <body>
@@ -1219,7 +1290,7 @@ $ npm install vue@next
 
         <!-- .prevent -->
         <a href="http://www.baidu.com">去百度</a>
-        <a href.prevent="http://www.baidu.com">你那也去不了</a>
+        <a href.prevent="http://www.baidu.com">你哪那也去不了</a>
 
         <!-- .capture -->
         <div @click="stopWai">
@@ -1265,21 +1336,11 @@ $ npm install vue@next
 </body>
 ```
 
-事件修饰符表格：
-
-| 修饰符   | 描述                                          |
-| -------- | --------------------------------------------- |
-| .stop    | 阻止事件冒泡（调用 event.stopPropagation()）  |
-| .prevent | 阻止默认事件（调用 event.preventDefault()。） |
-| .capture | 添加事件捕获                                  |
-| .self    | 只能由自身触发事件                            |
-| .once    | 该事件只会触发一次                            |
-
 
 
 ##### 11.11.3 v-on按键修饰符
 
-```
+```html
 <body>
     <div id="root">
         <!-- 键盘按键 = 键值 -->
@@ -1419,7 +1480,11 @@ directives: {
 
 #### 11.13 filter过滤器
 
-具体用法和**指令detective**一样，分为局部过滤器和全局过滤器。局部过滤器是使用`filters:{}`，全局过滤器是使用`Vue.filter(...)`。
+**过滤器(Filters)** 是vue为开发者提供的功能，常用于文本的格式化。过滤器可以用在两个地方：**插值表达式**和**v-bind属性绑定**。过滤器应该被添加在JavaScript表达式的尾部，由“ 管道符"`|`进行调用。
+
+具体用法和**指令detective**一样，分为局部过滤器和全局过滤器。局部过滤器是使用`filters:{}`，全局过滤器是使用`Vue.filter(...)`，当局部过滤器与全局过滤器重名冲突时，局部优先。
+
+> filter只在vue2提供，vue3不支持filter操作。
 
 ##### 11.13.1 局部过滤器
 
@@ -1446,6 +1511,7 @@ directives: {
             },
             // 局部定义
             filters:{
+                // 过滤器函数形参中的value, 永远都是”｜“前面的那个值
                 addPriceIcon(value){
                     console.log(value);
                     return '￥' + value + '元'
@@ -1484,7 +1550,7 @@ directives: {
 
 
 
-11.13.3 过滤器实现首字母大写
+##### 11.13.3 过滤器实现首字母大写
 
 ```html
 <body>
@@ -1545,8 +1611,8 @@ computed: {
 ```
 
 - 特点:
-  1. 定义的时候，要被定义为“方法"
-  2. 在使用计算属性的时候，当普通的属性使用即可
+  1. 定义的时候，要被定义为**“方法"格式**
+  2. 在使用计算属性的时候，当普通的属性使用即可，因为已经被挂载在Vue对象上了，可打印查看
 - 好处:
 
 1. 实现了代码的复用
@@ -1629,6 +1695,8 @@ watch: {
 
 
 ## 12. axios
+
+> axios是一个专注于网络请求的库
 
 ```js
 axios({
@@ -1722,14 +1790,37 @@ this.$http('/api/post',{ name: 'zs'，age: 20 })
 
 
 
-
-
 ## 13. vue-cli
 
+### 13.1 vue项目的安装
+
 - 安装vue-cli: `npm install -g @vue-cli`
-- 在指定的目录下创建项目: `vue create 项目名称`
-- 方向键控制选中的文字，建议选第三个，确认敲回车
-- 选择需要装的功能，按空格进行选择或取消
+- 在指定的目录下创建项目: `vue create 项目名称(英文的，最好别带空格)`
+- **方向键**控制选中的文字，建议选**第三个(Manually select features)**，确认敲**回车**
+- 选择需要装的功能，按**空格**进行选择或取消，括号里有`*`表示安装此项
+
+|              选项名               |             作用             |
+| :-------------------------------: | :--------------------------: |
+|        Choose Vue version         |    询问安装那个版本的Vue     |
+|               Babel               | 解决JS兼容性**（一定要装）** |
+|            TypeScript             |   TS，比JS更强大的脚本语言   |
+| Progressive Web App (PWA) Support |       渐进式的Web框架        |
+|              Router               |             路由             |
+|               Vuex                |           状态管理           |
+|        CSS Pre-processors         |         CSS预处理器          |
+|        Linter 1 Formatter         |         代码规范检验         |
+|           Unit Testing            |           单元测试           |
+|            E2E Testing            |          端到端测试          |
+
+>1. Where do you prefer placing config for Babel, ESLint, etc. ? 
+>
+>- **In dedicated config files(✔️)** 
+>- In package. json
+>
+>2. Save this as a preset for future projects? (y/N)
+>
+>- 一般选`y`表示保存选择过的选项，下一次如果用相同的配置的话选择起来会快一点
+
 - 最后进行安装,得到如下结果:
 
 ```
@@ -1756,11 +1847,41 @@ added 15 packages in 3s
  $ npm run serve
 ```
 
-- 打开目录的终端界面并运行指令`cd demo1`和 `npm run serve`
+- 打开目录的终端界面并运行指令`cd 项目名称`和 `npm run serve`
 
-> - assets 文件夹: 存放项目中用到的静态资源文件，例如: css 样式表、图片资源
-> - components 文件夹:程序员封装的、可复用的组件，都要放到components 目录下
-> - main.js 是项目的入口文件。整个项目的运行，要先执行main.js
+> 文件结构目录：
+>
+> - `node_modules`: 项目依赖，用npm安装的包都在这里放着
+> - `src`: 源码
+>   - `assets` : 存放项目中用到的静态资源文件，例如: css 样式表、图片资源
+>   - `components`: 程序员封装的、可复用的组件，都要放到components 目录下
+>   - main.js 是项目的入口文件。整个项目的运行，要先执行main.js
+>   - `App.vue`: 项目的根组件 
+
+### 13.2 vue项目的运行与使用
+
+- 在工程化的项目中，vue 要做的事情很单纯——通过`main.js`把`App.vue`渲染到`index.html`的指定区域中。
+  - App.vue用来编写待渲染的**模板结构**
+  - index.html中需要预留一个**el区域**
+  - main.js把App.vue渲染到了index.html所预留的区域中
+
+main.js：
+
+```js
+//导入vue这个包，得到Vue构造函数
+import Vue from 'vue'
+//导入App.vue根组件，将来要把App.vue中的模板结构，渲染到HTML页面中
+import App from './App.vue'
+Vue.config.productionTip = false
+
+//创建Vue的实例对象
+new Vue({
+	el: '#app',
+	//把render函数指定的组件渲染到HTML页面中
+	render: h => h(App)
+})
+// Vue实例的$mount() 方法，作用和el属性完全一样!
+```
 
 
 
@@ -1774,11 +1895,21 @@ added 15 packages in 3s
 
 ![组件](https://cn.vuejs.org/images/components.png)
 
-1. 在components目录下新建自定义组件
+- vue是一个支持组件化开发的前端框架。
+- vue中规定组件的后缀名是`.vue`。之前接触到的App.vue文件本质上就是一个vue的组件
+
+1. vue组件的三个组成部分
+
+- `template` -> 组件的**模板结构**
+- `script` -> 组件的**JavaScript行为**
+- `style` -> 组件的**样式**
+
+2. 在components目录下新建自定义组件
 
 ```vue
 // test.vue
 <template>
+	<!-- template中只能包含一个根节点 -->
   <div class="test">
     <div class="a">
       {{ str }}
@@ -1789,8 +1920,12 @@ added 15 packages in 3s
 </template>
 
 <script>
+// 默认导出，这是固定写法
+// 注意: .vue组件中的data不能像之前一样，不能指向对象
+// 注意: 组件中的data必须是一个函数
 export default {
   data() {
+    // 这个return出去的{ }中，可以定义数据
     return {
       str: "hello vue.js",
     };
@@ -1816,7 +1951,7 @@ export default {
 </style>
 ```
 
-2. 在App.vue文件中引用并使用
+3. 在App.vue文件中引用并使用
 
 ```vue
 <template>
