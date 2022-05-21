@@ -2119,6 +2119,8 @@ Vue.component('MyCount'，Count)
 
 #### 14.6 父组件到子组件的传值
 
+父组件向子组件共享数据需要使用**自定义属性**。示例代码如下:
+
 ```vue
 <template>
 	<div>
@@ -2141,63 +2143,170 @@ Vue.component('MyCount'，Count)
 
 #### 14.7 子组件到父组件到传值
 
+子组件向父组件共享数据使用**自定义事件**，示例代码如下:
+
 ```vue
-// 子组件MyCount
-methods: {
-   add(){
-     this.count++;
-     this.$emit('numchange'，this.count);
-   }
- }
+<!-- 子组件MyCount -->
+<script>
+  export default {
+    data() {
+      return {
+        count: 0
+      }
+    },
+    methods: {
+    	add(){
+      	this.count++;
+      	this.$emit('numchange'，this.count);
+     	}
+  	}
+	}
+</script>
 
-// 父组件
-{{ nowCnt }}
-<MyCount :init="myCountNum" @numchange="getCount"></MyCount>
 
-export default {
-  data() {
-    return {
-      nowCnt: 0
-    }
-  },
-  methods: {
-    getCount(val){
-      this.nowCnt = val;
-    }
-  },
-};
+<!-- 父组件 -->
+<template>
+	<div>
+    {{ nowCnt }}
+    <MyCount :init="myCountNum" @numchange="getCount"></MyCount>
+  </div>
+</template>
+
+<script>
+  export default {
+    data() {
+      return {
+        nowCnt: 0
+      }
+    },
+    methods: {
+      getCount(val){
+        this.nowCnt = val;
+      }
+    },
+  };
+</script>
 ```
 
 
 
 #### 14.8 兄弟组件之间的传值
 
-EventBus
+在vue`2.x`中，兄弟组件之间数据共享的方案是**EventBus**。
 
+##### 14.8.1 EventBus的使用步骤
 
+1. 在**components文件**下创建`eventBus.js`模块，并向外共享一个 **Vue的实例对象**
+2. 在数据**发送方**，调用**bus. $emit**('事件名称',要发送的数据)方法**触发自定义事件**
+3. 在数据**接收方**,调用**bus.$on**('事件名称',事件处理函数)方法**注册一个自定义事件**
 
-#### 14.9 使用Ref引用DOM
+##### 14.8.2 EventBus使用示例
+
+- 兄弟组件A（发送方）
 
 ```vue
-// 设置ref属性，名字别冲突
-<p ref="count1">当前值为: {{ count }}</p>
+<script>
+  // 1. 导入eventBus.js模块
+  import bus from './eventBus.js'
 
-// 使用
-this.$refs.count1
+  export default {
+    data() {
+      return {
+        msg: "hello vue.js"
+      }
+    },
+    mathods: {
+      sendMsg() {
+        // 2. 通过eventBus来发送数据
+        bus.$emit("share", this.msg)
+      }
+    }
+  }
+</script>
 ```
 
-> this.$nextTick(cb): 会把cb回调推迟到下一一个DOM更新周期之后执行。通俗的理解是: 等组件的DOM更新完成之后，再执行cb回调函数。从而能保证cb回调函数可以操作到最新的DOM元素。
+- 兄弟组件B（接受方）
+
+```vue
+<script>
+  // 1. 导入eventBus.js模块
+	import bus from './eventBus.js'
+  
+  export default {
+    data() {
+      return {
+        msgfromLeft: ""
+      }
+    },
+    created() {
+      // 为bus绑定自定义事件
+      bus.$on("share", val => {
+        this.msgfromLeft = val
+      })
+    }
+  }
+</script>
+```
+
+- eventBue.js
+
+```js
+import Vue from 'vue'
+export default new Vue()
+```
+
+
+
+#### 14.9 ref引用
+
+##### 14.9.1 什么是ref引用
+
+ref用来辅助开发者在不依赖于jQuery的情况下，获取DOM元素或组件的引用。
+每个vue的组件实例上，都包含一个$refs对象，里面存储着对应的DOM元素或组件的引用。
+
+> 默认情况下，组件的$refs指向一个空对象。
+
+##### 14.9.2 ref的使用
+
+1. 在想要操作的DOM上设置ref属性
+
+```html
+<p ref="count1">当前值为: {{ count }}</p>
+
+<!-- <hr ref="count1" /> -->
+```
+
+> - 但是要注意ref属性名的值别冲突，如果冲突了，后面的元素会覆盖之前的元素，如上述代码所示，如果取消第二行注释，那么将获取到<hr />元素
+> - **也可以在Vue组件上加上ref属性，那么就可以获得组件元素**
+
+2. 获取DOM
+
+```js
+console.log(this.$refs.count1)
+```
+
+##### 14.9.3 $nextTick
+
+组件的`$nextTick(cb)`会把cb回调**推迟到下一个DOM更新周期之后执行**。通俗的理解是: 等组件的DOM更新完成之后，再执行cb回调函数。从而能保证cb回调函数可以操作到最新的DOM元素。
 
 
 
 #### 14.10 动态展示组件
 
+实现此功能需要用到**component**组件
+
 ##### 14.10.1 代码示例
 
 ```vue
-// 通过is属性来动态绑定想要展示的组件的名字,切换后之前的组件会被销毁
-<components :is="TagName"></components>
-<button @click="changeTag">改变组件</button>
+<!-- 通过is属性来动态绑定想要展示的组件的名字,切换后之前的组件会被销毁 -->
+<template>
+  <div id="app">
+    <!-- 1. component标签是vue内置的，作用: 组件的占位符 -->
+		<!-- 2. is属性的值表示要渲染的组件的名字-->
+    <component :is="TagName"></component>
+		<button @click="changeTag">改变组件</button>
+  </div>
+</template>
 
 <script>
 import Test from '@/components/test.vue'
@@ -2222,30 +2331,102 @@ export default {
 </script>
 ```
 
-
-
-##### 14.10.2 keep-alive的使用
+更改`is`属性的值会导致原来的组件会被销毁，新的组件会被创建，可以在组件中加入如下代码查看：
 
 ```vue
-<keep-alive>
-  <components :is="TagName"></components>
-</keep-alive>
+<script>
+  export default {
+    name: "MyCount",
+    data() {
+      return {
+        count: 0
+      }
+    },
+    created() {
+      console.log("MyCount组件被创建了");
+    },
+    destroyed() {
+      console.log("MyCount组件被销毁了");
+    }
+  }
+</script>
 ```
 
 
 
+##### 14.10.2 keep-alive的使用
+
+为了解决上面提到的问题，可以使用keep-alive组件
+
+```vue
+<template>
+  <div id="app">
+    <img alt="Vue logo" src="./assets/logo.png"><br>
+    <button @click="name='Left'">显示Left组件</button>
+    <button @click="name='Right'">显示Right组件</button>
+    <hr>
+    <div class="componentsBox">
+      <!-- keep-alive可以把内部的组件进行缓存，而不是销毁组件 -->
+      <keep-alive>
+        <component :is="name"></component>
+      </keep-alive>
+    </div>
+  </div>
+</template>
+```
+
+打开**Vue DevTools**工具查看，**未显示**的组件后会有`inactive`标记
+
 > keep-alive对应的生命周期函数
 >
-> - 当组件被缓存时，会自动触发组件的deactivated生命周期函数。
-> - 当组件被激活时，会自动触发组件的activated生命周期函数。
+> - 当组件被缓存时，会自动触发组件的**deactivated**生命周期函数。
+> - 当组件被激活时，会自动触发组件的**activated**生命周期函数。
+> - 代码如下：
+>
+> ```vue
+> <script>
+>   export default {
+>     ...,
+>     // 先于activated执行
+>     created() {
+>       console.log("组件被创建了");
+>     },
+>     destroyed() {
+>       console.log("组件被销毁了");
+>     },
+>     activated() {
+>       console.log("组件被激活了");
+>     },
+>     deactivated() {
+>       console.log("组件被缓存了");
+>     },
+>     ...
+>   }
+> </script>
+> ```
 
-include属性指定要缓存的组件`include="MyCount，Test"`
+`include`属性指定要缓存的组件`include="MyCount，Test"`
 
-exclude属性同理，但是include和exclude不能同时使用
+`exclude`属性同理，**但是include和exclude不能同时使用**
+
+> 引号里写的是每个组件的name属性名称，示例如下：
+>
+> ```vue
+> <script>
+>   export default {
+>     //当提供了name 属性之后，组件的名称，就是name 属性的值
+>     //对比:
+>     // 1.组件的“注册名称”的主要应用场景是以标签的形式，把注册好的组件，渲染和使用到页面结构之中
+>     // 2.组件声明时候的“name” 名称的主要应用场景: 结合<keep-alive>标签实现组件缓存功能;以及在调试工具中看到组件的name名称
+>     name: "MyCount",
+>     ...
+>   }
+> </script>
+> ```
 
 
 
-#### 14.11 slot的使用
+#### 14.11 插槽(slot)的使用
 
 ```vue
 <template>
@@ -2253,12 +2434,15 @@ exclude属性同理，但是include和exclude不能同时使用
     <p>这是Count组件</p>
     <p ref="count1">当前值为: {{ count }}</p>
     <button @click="add">+1</button>
-    // 留一个插槽
+    <!-- 声明一个插槽区域-->
+		<!-- vue 官方规定:每一个slot插槽，都要有一个name名称-->
+		<!-- 如果省略了slot 的name属性，则有一个默认名称叫做default -->
     <slot></slot>
   </div>
 </template>
 
 <MyCount :init="myCountNum" @numchange="getCount">
+  <!-- 默认情况下，在使用组件的时候，提供的内容都会被填充到名字为default的插槽之中 -->
   <p>这是插槽</p>
 </MyCount>
 ```
@@ -2267,7 +2451,7 @@ exclude属性同理，但是include和exclude不能同时使用
 
 
 
-##### 14.11.1 将slot放到指定的插槽里
+##### 14.11.1 具名插槽
 
 ```vue
 <template>
@@ -2275,13 +2459,17 @@ exclude属性同理，但是include和exclude不能同时使用
     <p>这是Count组件</p>
     <p ref="count1">当前值为: {{ count }}</p>
     <button @click="add">+1</button>
-    // 给插槽定义一个name名称
+    <!-- 给插槽定义一个name名称 -->
     <slot name="footer">默认内容</slot>
   </div>
 </template>
 
 <MyCount :init="myCountNum" @numchange="getCount">
-  <template v-slot:footer>
+  <!-- 1.如果要把内容填充到指定名称的插槽中，需要使用v-slot这个指令 -->
+	<!-- 2. v-slot: 后面要跟上插槽的名字 -->
+	<!-- 3. v-slot: 指令不能直接用在元素身上，必须用在template标签上 -->
+	<!-- 4. template这个标签，它是一个虚拟的标签，只起到包裹性质的作用，但是，不会被渲染为任何实质性的html元素 -->
+  <template v-slot:footer><!-- <template #footer> -->
     <p>这是插槽</p>
   </template>
 </MyCount>
@@ -2291,16 +2479,19 @@ exclude属性同理，但是include和exclude不能同时使用
 
 
 
-##### 14.11.2 具名插槽
+##### 14.11.2 作用域插槽
 
 `<slot name="footer" >默认内容</slot>`
 
 ```vue
 <MyCount :init="myCountNum" @numchange="getCount">
-  <template #footer="scope"> // 接受传过来的值msg并重命名为scope
+  <!-- 接受传过来的值msg并重命名为scope -->
+  <!-- <template #footer="{ msg }"> -->
+  <template #footer="scope">
     <p>这是插槽</p>
-		// 使用值
-    <p>{{scope.msg}}</p>
+		<!-- 使用值 -->
+		<!-- <p>{{ msg }}</p> -->
+    <p>{{ scope.msg }}</p>
   </template>
 </MyCount>
 
@@ -2309,7 +2500,7 @@ exclude属性同理，但是include和exclude不能同时使用
     <p>这是Count组件</p>
     <p ref="count1">当前值为: {{ count }}</p>
     <button @click="add">+1</button>
-    // msg是预留的,可能用得到的值
+    <!-- msg是预留的,可能用得到的值 -->
     <slot name="footer" msg="这是尾部"></slot>
   </div>
 </template>
@@ -2336,11 +2527,18 @@ exclude属性同理，但是include和exclude不能同时使用
 
 ## 16. router路由
 
-#### 16.1 什么是路由
+#### 16.1 路由
 
-路由(router)就是**对应关系**
+##### 16.1.1 什么是路由
 
+路由(router)就是**对应关系**，通俗易懂的概念：**Hash地址与组件之间的对应关系**。
 
+##### 16.1.2 SPA与前端路由
+
+**单页Web应用(single page web application，*SPA*)**指的是一个web网站只有唯一的一个HTML页面，所有组件的展示与切换都在这唯一的一 个页面内完成。此时，不同组件之间的切换需要通过前端路由来实现。
+**结论: 在SPA项目中，不同功能之间的切换，要依赖于前端路由来完成!**
+
+ 
 
 #### 16.2 前段路由的工作方式
 
@@ -2355,6 +2553,32 @@ exclude属性同理，但是include和exclude不能同时使用
 
 1. 输入命令`npm install vue-router@3.5.2 -S`进行安装
 
+如果出现以下错误，是因为安装版本过高引起的，安装3.5.2就可以了
+
+```shell
+npm ERR! code ERESOLVE
+npm ERR! ERESOLVE unable to resolve dependency tree
+npm ERR! 
+npm ERR! While resolving: firstvue@0.1.0
+npm ERR! Found: vue@2.6.14
+npm ERR! node_modules/vue
+npm ERR!   vue@"^2.6.11" from the root project
+npm ERR! 
+npm ERR! Could not resolve dependency:
+npm ERR! peer vue@"^3.2.0" from vue-router@4.0.15
+npm ERR! node_modules/vue-router
+npm ERR!   vue-router@"4" from the root project
+npm ERR! 
+npm ERR! Fix the upstream dependency conflict, or retry
+npm ERR! this command with --force, or --legacy-peer-deps
+npm ERR! to accept an incorrect (and potentially broken) dependency resolution.
+npm ERR! 
+npm ERR! See /Users/karl/.npm/eresolve-report.txt for a full report.
+
+npm ERR! A complete log of this run can be found in:
+npm ERR!     /Users/karl/.npm/_logs/2022-05-21T07_06_49_632Z-debug.log
+```
+
 2. 在src源代码目录下，新建router/index.js路由模块，并初始化如下的代码:
 
 ```js
@@ -2366,7 +2590,6 @@ import VueRouter from 'vue-router'
 Vue.use(VueRouter)
 
 // 3.创建路由的实例对象
-
 const router = new VueRouter()
 
 //4.向外共享路由的实例对象
@@ -2392,31 +2615,39 @@ new Vue({
 
 ```js
 // router/index.js
-import hello from '@/components/HelloWorld.vue'
-import count from '@/components/count.vue'
+import Vue from 'vue'
+import VueRouter from 'vue-router'
+// 导入需要的组件
+import HelloWorld from '@/components/HelloWorld.vue'
+import Left from '@/components/Left.vue'
+import Right from '@/components/Right.vue'
 
 const router = new VueRouter({
-  routers: [
-    // 路由规则
-    { path: '/home'，component: hello },
-    { path: '/count'，components: count }
+  // 路由规则
+  routes: [
+    { path: '/index', component: HelloWorld },
+    { path: '/Left', component: Left },
+    { path: '/Right', component: Right }
   ]
 })
 ```
 
 ```vue
-// 在.vue文件中使用<router-view></router-view>
 <template>
   <div>
     <p>hello world</p>
-    <a href="#/home">主页</a>
-    <a href="#/count">计数器</a>
+    <a href="#/index">index</a>&nbsp;
+    <a href="#/Left">Left</a>&nbsp;
+    <a href="#/Right">Right</a>&nbsp;
 		<hr />
+    <!--只要在项目中安装和配置了vue-router, 就可以使用router-view 这个组件了-->
+		<!-- 它的作用很单纯:占位符-->
+    <!-- 在.vue文件中使用<router-view></router-view> -->
     <router-view></router-view>
   </div>
 </template>
   
-// 或者把a标签换成<router-link></router-link>
+<!-- 官方建议把<a></a>标签换成<router-link></router-link> -->
 <router-link to="/home">主页</router-link>
 <router-link to="/count">计数器</router-link>
 ```
@@ -2482,9 +2713,11 @@ const router = new VueRouter({
       component: About,
       // 重定向路由
       redirect: '/about/tab1'
-      children: [ // 1.通过children属性，嵌套声明子级路由规则
+      children: [ 
+      	// 1.通过children属性，嵌套声明子级路由规则
         // 2.访问/about/tab1 时，展示Tab1组件
-        { path: 'tab1'，component: Tab1}，
+      	// 子路由一般不加/
+        { path: 'tab1'，component: Tab1 }，
         // 2.访问/about/tab2 时，展示Tab2组件
         { path: 'tab2'，component: Tab2 } 
       ]
@@ -2613,3 +2846,30 @@ Vue.use(Vant);
 > Tips: 配置按需引入后，将不允许直接导入所有组件。
 
 3. 复制相应代码到.vue文件中使用组件
+
+
+
+### 17. axios
+
+全局使用axios的设置
+
+1. 挂载到Vue原型上
+
+```js
+// main.js
+import Vue from 'vue'
+import App from './App.vue'
+import axios from 'axios'
+Vue.config.productionTip = false
+// 增加以下语句
+//全局配置axios 的请求根路径
+axios.defaults.baseURL = '请求根路径'
+//把axios挂载到Vue.prototype上，供每个vue组件的实例直接使用
+vue.prototype.axios= axios
+
+new Vue({
+	render: h => h(App)
+}).$mount('#app')
+```
+
+>  但是把axios挂载到Vue原型上，有一个缺点: 不利于API接口的复用! !
