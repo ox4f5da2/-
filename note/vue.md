@@ -2547,6 +2547,8 @@ export default {
 3. **前端路由监听了到Hash地址的变化**(window.onhashchange事件 => location.hash => #/home)
 4. 前端路由把当前**Hash地址对应的组件**渲染都浏览器中
 
+> hash地址都要小写
+
 
 
 #### 16.3 Vue-router
@@ -2626,8 +2628,8 @@ const router = new VueRouter({
   // 路由规则
   routes: [
     { path: '/index', component: HelloWorld },
-    { path: '/Left', component: Left },
-    { path: '/Right', component: Right }
+    { path: '/left', component: Left },
+    { path: '/right', component: Right }
   ]
 })
 ```
@@ -2637,8 +2639,8 @@ const router = new VueRouter({
   <div>
     <p>hello world</p>
     <a href="#/index">index</a>&nbsp;
-    <a href="#/Left">Left</a>&nbsp;
-    <a href="#/Right">Right</a>&nbsp;
+    <a href="#/left">Left</a>&nbsp;
+    <a href="#/right">Right</a>&nbsp;
 		<hr />
     <!--只要在项目中安装和配置了vue-router, 就可以使用router-view 这个组件了-->
 		<!-- 它的作用很单纯:占位符-->
@@ -2717,6 +2719,7 @@ const router = new VueRouter({
       	// 1.通过children属性，嵌套声明子级路由规则
         // 2.访问/about/tab1 时，展示Tab1组件
       	// 子路由一般不加/
+      //默认子路由: 如果children数组中，某个路由规则的path值为空字符串，则这条路由规则，叫做“默认子路由”
         { path: 'tab1'，component: Tab1 }，
         // 2.访问/about/tab2 时，展示Tab2组件
         { path: 'tab2'，component: Tab2 } 
@@ -2734,6 +2737,8 @@ const router = new VueRouter({
 
 `{ path: '/movie/:id?name=zs age=20'，component: Movie}`
 
+##### 16.6.1 $route.param获取传参
+
 拿到id值: `this.$route.param.id`或`$route.param.id`
 
 > - 在hash地址中，/ 后面的参数项叫做“路径参数”，在路由“参数对象”中,需要使用this.$route.params来访问路径参数
@@ -2742,7 +2747,7 @@ const router = new VueRouter({
 
 
 
-##### 16.6.1 开启props传参
+##### 16.6.2 开启props传参
 
 1. 在router/index.js中的routers数组中写入
 
@@ -2814,7 +2819,7 @@ router.beforeEach((to，from，next) => {
 ```js
 router.beforeEach((to，from，next) => {
 if (to.path === '/main') {
-	const token = localStorage . getItem( ' token' )
+	const token = localStorage.getItem('token')
 	if (token) {
 		next() //访问的是后台主页，且有token的值
   } else {
