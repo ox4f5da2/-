@@ -2878,3 +2878,72 @@ new Vue({
 ```
 
 >  但是把axios挂载到Vue原型上，有一个缺点: 不利于API接口的复用! !
+
+
+
+### 18. Vuex
+
+#### 18.1理解vuex
+
+##### 18.1.1 vuex是什么
+
+1. 概念: 专门在Vue中实现集中式状态(数据)管理的一个**Vue插件**，对vue应用中多个组件的共享状态进行集中式的管理(读/写)，也是一种组件间通信的方式，且适用于任意组件间通信。
+
+2. Github 地址: https://github.com/vuejs/vuex
+
+##### 18.1.2 什么时候使用Vuex
+
+1. 多个组件依赖于同一状态
+2. 来自不同组件的行为需要变更同一状态
+
+##### 18.1.3 Vuex工作原理图
+
+![](https://vuex.vuejs.org/vuex.png)
+
+#### 18.2 Vuex使用
+
+> 提示：
+>
+> - vue2中要用vuex的3版本
+> - vue3中要用vuex的4版本
+
+1. 输入命令：`npm install vuex@3`或`npm install vuex`(默认4版本)
+
+2. 创建文件：src/store/index.js
+
+```js
+//该又件用于创建Vuex中最为核心的store
+
+import Vue from 'vue'
+import Vuex from 'vuex' 
+// 使用Vuex插件
+Vue.use(Vuex)
+// 准备actions——用于响应组件中的动作
+const actions = {}
+// 准备mutations——用于操作数据(state)
+const mutations = {}
+// 准备state——用于存储数据
+const state = {}
+
+// 创建并暴露store
+export default new Vuex.Store({
+  actions,
+	mutations,
+	state,
+})
+```
+
+3. 在main.js中创建vm时传入store配置项
+
+```js
+// main.js
+// 引入store
+import store from './store/index'
+// 使用
+new Vue({
+  ...,
+  store,
+  ...
+})
+```
+
